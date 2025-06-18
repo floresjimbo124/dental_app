@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Patient - Dental Clinic</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .form-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .btn-custom {
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        @media (max-width: 768px) {
+            .form-container {
+                margin: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-tooth me-2"></i>Dental Clinic
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/appointments">Appointments</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/calendar">Calendar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/patients">Patients</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/add">Book Appointment</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container text-center">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-user-edit me-3"></i>Edit Patient
+            </h1>
+            <p class="lead mb-0">Update patient information in the dental clinic database</p>
+        </div>
+    </section>
+
+    <!-- Form Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="form-container">
+                        <div class="p-4">
+                            <h3 class="mb-4 text-center">
+                                <i class="fas fa-user-edit me-2 text-primary"></i>Patient Information
+                            </h3>
+                            
+                            {% if error_message %}
+                            <div class="alert alert-danger" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2"></i>{{ error_message }}
+                            </div>
+                            {% endif %}
+                            
+                            <form method="POST" class="needs-validation" novalidate>
+                                <div class="row g-3">
+                                    <!-- Basic Information -->
+                                    <div class="col-12">
+                                        <h5 class="text-primary mb-3">
+                                            <i class="fas fa-info-circle me-2"></i>Basic Information
+                                        </h5>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label for="name" class="form-label">
+                                            <i class="fas fa-user me-2 text-primary"></i>Full Name *
+                                        </label>
+                                        <input type="text" class="form-control" id="name" name="name" 
+                                               value="{{ patient[1] }}" required>
+                                        <div class="invalid-feedback">
+                                            Please enter the patient's full name.
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label for="contact" class="form-label">
+                                            <i class="fas fa-phone me-2 text-primary"></i>Contact Number *
+                                        </label>
+                                        <input type="tel" class="form-control" id="contact" name="contact" 
+                                               value="{{ patient[2] }}" required>
+                                        <div class="invalid-feedback">
+                                            Please enter a valid contact number.
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">
+                                            <i class="fas fa-envelope me-2 text-primary"></i>Email Address
+                                        </label>
+                                        <input type="email" class="form-control" id="email" name="email" 
+                                               value="{{ patient[3] or '' }}">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label for="date_of_birth" class="form-label">
+                                            <i class="fas fa-birthday-cake me-2 text-primary"></i>Date of Birth
+                                        </label>
+                                        <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" 
+                                               value="{{ patient[4] or '' }}">
+                                    </div>
+                                    
+                                    <!-- Address Information -->
+                                    <div class="col-12">
+                                        <h5 class="text-primary mb-3 mt-4">
+                                            <i class="fas fa-map-marker-alt me-2"></i>Address Information
+                                        </h5>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <label for="address" class="form-label">
+                                            <i class="fas fa-home me-2 text-primary"></i>Address
+                                        </label>
+                                        <textarea class="form-control" id="address" name="address" rows="3" 
+                                                  placeholder="Enter complete address">{{ patient[5] or '' }}</textarea>
+                                    </div>
+                                    
+                                    <!-- Emergency Contact -->
+                                    <div class="col-12">
+                                        <h5 class="text-primary mb-3 mt-4">
+                                            <i class="fas fa-ambulance me-2"></i>Emergency Contact
+                                        </h5>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label for="emergency_contact" class="form-label">
+                                            <i class="fas fa-phone-alt me-2 text-primary"></i>Emergency Contact
+                                        </label>
+                                        <input type="tel" class="form-control" id="emergency_contact" 
+                                               name="emergency_contact" placeholder="Emergency contact number"
+                                               value="{{ patient[6] or '' }}">
+                                    </div>
+                                    
+                                    <!-- Medical History -->
+                                    <div class="col-12">
+                                        <h5 class="text-primary mb-3 mt-4">
+                                            <i class="fas fa-notes-medical me-2"></i>Medical Information
+                                        </h5>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <label for="medical_history" class="form-label">
+                                            <i class="fas fa-file-medical me-2 text-primary"></i>Medical History
+                                        </label>
+                                        <textarea class="form-control" id="medical_history" name="medical_history" 
+                                                  rows="4" placeholder="Enter any relevant medical history, allergies, medications, etc.">{{ patient[7] or '' }}</textarea>
+                                    </div>
+                                    
+                                    <!-- Submit Buttons -->
+                                    <div class="col-12 text-center mt-4">
+                                        <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                                            <button type="submit" class="btn btn-primary btn-custom">
+                                                <i class="fas fa-save me-2"></i>Update Patient
+                                            </button>
+                                            <a href="/patients" class="btn btn-outline-secondary btn-custom">
+                                                <i class="fas fa-times me-2"></i>Cancel
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="py-4">
+        <div class="container">
+            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                <a href="/patients" class="btn btn-primary btn-custom">
+                    <i class="fas fa-users me-2"></i>View All Patients
+                </a>
+                <a href="/patient/{{ patient[1]|urlencode }}" class="btn btn-success btn-custom">
+                    <i class="fas fa-history me-2"></i>View Patient History
+                </a>
+                <a href="/add?patient={{ patient[1]|urlencode }}" class="btn btn-info btn-custom">
+                    <i class="fas fa-plus me-2"></i>Add Appointment
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2025 Dental Clinic. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Form validation
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar - Dental Clinic</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .calendar-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 2rem;
+        }
+        .calendar-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        .calendar-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .calendar-table th {
+            background: #f8f9fa;
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid #dee2e6;
+        }
+        .calendar-table td {
+            border: 1px solid #dee2e6;
+            padding: 0.5rem;
+            height: 120px;
+            vertical-align: top;
+            position: relative;
+        }
+        .calendar-day {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .other-month {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+        .today {
+            background-color: #e3f2fd;
+            border: 2px solid #2196f3;
+        }
+        .appointment-item {
+            background: #007bff;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            margin: 0.1rem 0;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .appointment-item:hover {
+            background: #0056b3;
+            transform: scale(1.02);
+        }
+        .appointment-time {
+            font-weight: bold;
+            font-size: 0.7rem;
+        }
+        .appointment-patient {
+            font-size: 0.7rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .appointment-care {
+            font-size: 0.6rem;
+            opacity: 0.9;
+        }
+        .past-appointment {
+            background: #6c757d !important;
+            opacity: 0.7;
+        }
+        .past-appointment:hover {
+            background: #5a6268 !important;
+            transform: none;
+        }
+        .past-indicator {
+            font-size: 0.5rem;
+            background: rgba(255,255,255,0.2);
+            padding: 0.1rem 0.3rem;
+            border-radius: 2px;
+            margin-top: 0.1rem;
+            text-align: center;
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+        }
+        @media (max-width: 768px) {
+            .calendar-table td {
+                height: 80px;
+                padding: 0.25rem;
+            }
+            .appointment-item {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.4rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-tooth me-2"></i>Dental Clinic
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/appointments">Appointments</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/calendar">Calendar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/patients">Patients</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/add">Book Appointment</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container text-center">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-calendar-alt me-3"></i>Monthly Calendar
+            </h1>
+            <p class="lead mb-0">View all appointments in a monthly calendar view</p>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <i class="fas fa-calendar-check fa-2x text-success mb-3"></i>
+                        <h4 class="fw-bold">{{ appointments_by_date|length }}</h4>
+                        <p class="text-muted mb-0">Days with Appointments</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <i class="fas fa-clock fa-2x text-warning mb-3"></i>
+                        <h4 class="fw-bold">{{ total_appointments }}</h4>
+                        <p class="text-muted mb-0">Total Appointments</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <i class="fas fa-tooth fa-2x text-info mb-3"></i>
+                        <h4 class="fw-bold">{{ month_name }}</h4>
+                        <p class="text-muted mb-0">{{ year }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Calendar Section -->
+    <section class="py-4">
+        <div class="container">
+            <div class="calendar-container">
+                <!-- Calendar Header with Navigation -->
+                <div class="calendar-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <a href="/calendar?year={{ prev_year }}&month={{ prev_month }}" class="nav-btn">
+                                <i class="fas fa-chevron-left me-2"></i>Previous
+                            </a>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <h2 class="mb-0 fw-bold">{{ month_name }} {{ year }}</h2>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a href="/calendar?year={{ next_year }}&month={{ next_month }}" class="nav-btn">
+                                Next<i class="fas fa-chevron-right ms-2"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calendar Table -->
+                <div class="table-responsive">
+                    <table class="calendar-table">
+                        <thead>
+                            <tr>
+                                <th>Sunday</th>
+                                <th>Monday</th>
+                                <th>Tuesday</th>
+                                <th>Wednesday</th>
+                                <th>Thursday</th>
+                                <th>Friday</th>
+                                <th>Saturday</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for week in calendar %}
+                            <tr>
+                                {% for day in week %}
+                                {% set current_date = "%04d-%02d-%02d"|format(year, month, day) if day != 0 else "" %}
+                                {% set is_today = current_date == today_date if current_date else False %}
+                                {% set has_appointments = current_date in appointments_by_date %}
+                                <td class="{% if day == 0 %}other-month{% elif is_today %}today{% endif %}">
+                                    {% if day != 0 %}
+                                    <div class="calendar-day">{{ day }}</div>
+                                    {% if has_appointments %}
+                                        {% for appointment in appointments_by_date[current_date] %}
+                                        {% set appointment_datetime = appointment[3] + ' ' + appointment[4] %}
+                                        {% set is_past_appointment = appointment_datetime < current_datetime %}
+                                        <div class="appointment-item {% if is_past_appointment %}past-appointment{% endif %}" 
+                                             data-id="{{ appointment[0] }}"
+                                             data-patient="{{ appointment[1] }}"
+                                             data-date="{{ appointment[3] }}"
+                                             data-time="{{ appointment[4] }}"
+                                             data-care="{{ appointment[5] }}"
+                                             data-is-past="{{ 'true' if is_past_appointment else 'false' }}">
+                                            <div class="appointment-time">{{ appointment[4]|ampm }}</div>
+                                            <div class="appointment-patient">{{ appointment[1] }}</div>
+                                            <div class="appointment-care">{{ appointment[5] }}</div>
+                                            {% if is_past_appointment %}
+                                            <div class="past-indicator">Past</div>
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="py-4">
+        <div class="container">
+            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                <a href="/" class="btn btn-primary btn-custom">
+                    <i class="fas fa-home me-2"></i>Back to Home
+                </a>
+                <a href="/appointments" class="btn btn-success btn-custom">
+                    <i class="fas fa-list me-2"></i>List View
+                </a>
+                <a href="/add" class="btn btn-info btn-custom">
+                    <i class="fas fa-plus me-2"></i>Add Appointment
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Appointment Details Modal -->
+    <div class="modal fade" id="appointmentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Appointment Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <p><strong>Patient:</strong> <span id="modal-patient"></span></p>
+                            <p><strong>Date:</strong> <span id="modal-date"></span></p>
+                            <p><strong>Time:</strong> <span id="modal-time"></span></p>
+                            <p><strong>Dental Care:</strong> <span id="modal-care"></span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="#" id="modal-edit-btn" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>Edit
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2025 Dental Clinic. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add event listeners to appointment items
+        document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.appointment-item')) {
+                    const item = e.target.closest('.appointment-item');
+                    const id = item.dataset.id;
+                    const patient = item.dataset.patient;
+                    const date = item.dataset.date;
+                    const time = item.dataset.time;
+                    const care = item.dataset.care;
+                    
+                    showAppointmentDetails(id, patient, date, time, care);
+                }
+            });
+        });
+
+        function showAppointmentDetails(id, patient, date, time, care) {
+            // Format time to 12-hour format
+            function formatTime12Hour(timeStr) {
+                try {
+                    const [hours, minutes] = timeStr.split(':');
+                    const hour = parseInt(hours);
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    const hour12 = hour % 12 || 12;
+                    return `${hour12}:${minutes} ${ampm}`;
+                } catch (e) {
+                    return timeStr; // fallback to original if parsing fails
+                }
+            }
+            
+            document.getElementById('modal-patient').textContent = patient;
+            document.getElementById('modal-date').textContent = date;
+            document.getElementById('modal-time').textContent = formatTime12Hour(time);
+            document.getElementById('modal-care').textContent = care;
+            
+            // Check if appointment is in the past
+            const appointmentDatetime = date + ' ' + time;
+            const currentDatetime = new Date().toISOString().slice(0, 16).replace('T', ' ');
+            const isPastAppointment = appointmentDatetime < currentDatetime;
+            
+            const editBtn = document.getElementById('modal-edit-btn');
+            if (isPastAppointment) {
+                editBtn.href = '#';
+                editBtn.classList.remove('btn-primary');
+                editBtn.classList.add('btn-secondary');
+                editBtn.disabled = true;
+                editBtn.innerHTML = '<i class="fas fa-edit me-2"></i>Cannot Edit Past Appointment';
+                editBtn.title = 'Cannot edit appointments that have already passed';
+            } else {
+                editBtn.href = '/edit/' + id;
+                editBtn.classList.remove('btn-secondary');
+                editBtn.classList.add('btn-primary');
+                editBtn.disabled = false;
+                editBtn.innerHTML = '<i class="fas fa-edit me-2"></i>Edit';
+                editBtn.title = 'Edit appointment';
+            }
+            
+            new bootstrap.Modal(document.getElementById('appointmentModal')).show();
+        }
+    </script>
+</body>
+</html> 

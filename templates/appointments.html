@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointments - Dental Clinic</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        .calendar-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .filter-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .appointments-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 15px;
+        }
+        .table td {
+            padding: 15px;
+            vertical-align: middle;
+            border-color: #e9ecef;
+        }
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+            transition: background-color 0.3s ease;
+        }
+        .btn-custom {
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        .flatpickr-calendar {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        @media (max-width: 768px) {
+            .table-responsive {
+                border-radius: 15px;
+            }
+            .table th, .table td {
+                padding: 10px 8px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-tooth me-2"></i>Dental Clinic
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/appointments">Appointments</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/calendar">Calendar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/patients">Patients</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/add">Book Appointment</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container text-center">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-calendar-alt me-3"></i>Appointment Calendar
+            </h1>
+            <p class="lead mb-0">View and manage all your dental appointments</p>
+        </div>
+    </section>
+
+    <!-- Error Message Section -->
+    {% if error_message %}
+    <section class="py-3">
+        <div class="container">
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ error_message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Stats Section -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <i class="fas fa-calendar-check fa-2x text-success mb-3"></i>
+                        <h4 class="fw-bold">{{ appointments|length }}</h4>
+                        <p class="text-muted mb-0">Total Appointments</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <i class="fas fa-clock fa-2x text-warning mb-3"></i>
+                        <h4 class="fw-bold">{{ appointments|length }}</h4>
+                        <p class="text-muted mb-0">Upcoming</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <i class="fas fa-tooth fa-2x text-info mb-3"></i>
+                        <h4 class="fw-bold">{{ dental_care_types|length }}</h4>
+                        <p class="text-muted mb-0">Dental Care Types</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Calendar and Filters Section -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row">
+                <!-- Calendar -->
+                <div class="col-lg-4 mb-4">
+                    <div class="calendar-container">
+                        <h4 class="mb-3">
+                            <i class="fas fa-calendar me-2 text-primary"></i>Select Date
+                        </h4>
+                        <input type="text" id="datePicker" class="form-control" placeholder="Pick a date">
+                        <div class="mt-3">
+                            <button class="btn btn-outline-primary btn-sm" onclick="clearDateFilter()">
+                                <i class="fas fa-times me-1"></i>Clear Date
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="col-lg-8">
+                    <div class="filter-container">
+                        <h4 class="mb-3">
+                            <i class="fas fa-filter me-2 text-primary"></i>Filters
+                        </h4>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="dentalCareFilter" class="form-label fw-bold">Dental Care Type</label>
+                                <select class="form-select" id="dentalCareFilter">
+                                    <option value="">All Types</option>
+                                    {% for care_type in dental_care_types %}
+                                    <option value="{{ care_type }}" {% if care_type == dental_care_filter %}selected{% endif %}>
+                                        {{ care_type }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Actions</label>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary btn-sm" onclick="applyFilters()">
+                                        <i class="fas fa-search me-1"></i>Apply Filters
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="clearAllFilters()">
+                                        <i class="fas fa-times me-1"></i>Clear All
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Appointments Table -->
+    <section class="py-4">
+        <div class="container">
+            {% if appointments %}
+            <div class="appointments-container">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Patient</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Dental Care</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in appointments %}
+                            {% set appointment_datetime = row[3] + ' ' + row[4] %}
+                            {% set is_past_appointment = appointment_datetime < current_datetime %}
+                            <tr class="{% if is_past_appointment %}table-secondary{% endif %}">
+                                <td><strong>{{ row[1] }}</strong></td>
+                                <td>
+                                    {{ row[3] }}
+                                    {% if is_past_appointment %}
+                                    <br><small class="text-muted"><i class="fas fa-clock me-1"></i>Past appointment</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ row[4]|ampm }}</td>
+                                <td>{{ row[5] }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        {% if is_past_appointment %}
+                                        <button class="btn btn-outline-secondary" disabled title="Cannot edit past appointments">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-outline-secondary" disabled title="Cannot delete past appointments">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% else %}
+                                        <a href="/edit/{{ row[0] }}" class="btn btn-outline-primary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="/delete/{{ row[0] }}" class="btn btn-outline-danger" 
+                                           onclick="return confirm('Are you sure you want to delete this appointment?')" 
+                                           title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-calendar-times"></i>
+                <h3 class="mb-3">No Appointments Found</h3>
+                <p class="lead mb-4">No appointments match your current filters. Try adjusting your search criteria.</p>
+                <button class="btn btn-primary btn-custom" onclick="clearAllFilters()">
+                    <i class="fas fa-times me-2"></i>Clear All Filters
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="py-4">
+        <div class="container">
+            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                <a href="/" class="btn btn-primary btn-custom">
+                    <i class="fas fa-home me-2"></i>Back to Home
+                </a>
+                <a href="/add" class="btn btn-success btn-custom">
+                    <i class="fas fa-plus me-2"></i>Add New Appointment
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2025 Dental Clinic. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        // Initialize date picker
+        const datePicker = flatpickr("#datePicker", {
+            dateFormat: "Y-m-d",
+            defaultDate: "{{ selected_date }}",
+            onChange: function(selectedDates, dateStr) {
+                applyFilters();
+            }
+        });
+
+        function applyFilters() {
+            const selectedDate = document.getElementById('datePicker').value;
+            const dentalCareFilter = document.getElementById('dentalCareFilter').value;
+            
+            let url = '/appointments?';
+            if (selectedDate) url += `date=${selectedDate}&`;
+            if (dentalCareFilter) url += `dental_care=${encodeURIComponent(dentalCareFilter)}`;
+            
+            window.location.href = url;
+        }
+
+        function clearDateFilter() {
+            document.getElementById('datePicker').value = '';
+            applyFilters();
+        }
+
+        function clearAllFilters() {
+            document.getElementById('datePicker').value = '';
+            document.getElementById('dentalCareFilter').value = '';
+            window.location.href = '/appointments';
+        }
+    </script>
+</body>
+</html>
