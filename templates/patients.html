@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patients - Dental Clinic</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .patients-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .patients-container .table-responsive {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .table td {
+            padding: 15px;
+            vertical-align: middle;
+            border-color: #e9ecef;
+        }
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+            transition: background-color 0.3s ease;
+        }
+        .btn-custom {
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        @media (max-width: 768px) {
+            .table-responsive {
+                border-radius: 15px;
+            }
+            .table th, .table td {
+                padding: 10px 8px;
+                font-size: 0.9rem;
+            }
+        }
+        .pagination .page-link {
+            border-radius: 8px;
+            margin: 0 2px;
+            border: none;
+            color: #667eea;
+            font-weight: 500;
+        }
+        .pagination .page-item.active .page-link {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+        }
+        .pagination .page-link:hover {
+            background-color: #f8f9fa;
+            color: #667eea;
+        }
+        .pagination .page-item.disabled .page-link {
+            color: #6c757d;
+            background-color: transparent;
+        }
+        .search-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Responsive Alert Styles */
+        .alert-responsive {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            animation: slideInDown 0.3s ease-out;
+        }
+        
+        .alert-responsive.alert-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .alert-responsive.alert-warning {
+            background: linear-gradient(135deg, #ffd93d 0%, #ffc107 100%);
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .alert-responsive.alert-success {
+            background: linear-gradient(135deg, #51cf66 0%, #28a745 100%);
+            color: white;
+            border-left: 4px solid #28a745;
+        }
+        
+        .alert-responsive.alert-info {
+            background: linear-gradient(135deg, #74c0fc 0%, #17a2b8 100%);
+            color: white;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .alert-responsive .btn-close {
+            filter: brightness(0) invert(1);
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+        }
+        
+        .alert-responsive .btn-close:hover {
+            opacity: 1;
+        }
+        
+        .alert-responsive .alert-icon {
+            font-size: 1.1rem;
+            margin-right: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .alert-responsive .alert-content {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+        
+        .alert-responsive .alert-text {
+            flex: 1;
+            margin-right: 1rem;
+        }
+        
+        .alert-responsive .alert-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Validation Messages */
+        .validation-message {
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border-left: 3px solid;
+            animation: fadeInUp 0.3s ease-out;
+        }
+        
+        .validation-message.validation-error {
+            background: linear-gradient(135deg, #ffe6e6 0%, #ffebee 100%);
+            color: #d32f2f;
+            border-left-color: #f44336;
+        }
+        
+        .validation-message.validation-success {
+            background: linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%);
+            color: #2e7d32;
+            border-left-color: #4caf50;
+        }
+        
+        .validation-message.validation-warning {
+            background: linear-gradient(135deg, #fff8e1 0%, #fffde7 100%);
+            color: #f57c00;
+            border-left-color: #ff9800;
+        }
+        
+        .validation-message.validation-info {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            color: #1976d2;
+            border-left-color: #2196f3;
+        }
+        
+        /* Form Validation Styles */
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='m5.8 4.6 1.4 1.4L5.8 7.4'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+        
+        .form-control.is-valid {
+            border-color: #198754;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='m2.3 6.73.94-.94 2.54 2.54 3.94-3.94.94.94-4.88 4.88z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+        
+        .invalid-feedback {
+            display: block;
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            border-left: 3px solid #dc3545;
+            animation: fadeInUp 0.3s ease-out;
+        }
+        
+        .valid-feedback {
+            display: block;
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #198754;
+            background: rgba(25, 135, 84, 0.1);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            border-left: 3px solid #198754;
+            animation: fadeInUp 0.3s ease-out;
+        }
+        
+        /* Animations */
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                transform: translateY(10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Responsive adjustments for alerts */
+        @media (max-width: 768px) {
+            .alert-responsive {
+                padding: 0.875rem 1rem;
+                font-size: 0.9rem;
+                margin-bottom: 1rem;
+            }
+            
+            .alert-responsive .alert-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .alert-responsive .alert-text {
+                margin-right: 0;
+                margin-bottom: 0.5rem;
+            }
+            
+            .alert-responsive .alert-actions {
+                align-self: flex-end;
+            }
+            
+            .validation-message {
+                font-size: 0.8rem;
+                padding: 0.625rem;
+            }
+            
+            .invalid-feedback,
+            .valid-feedback {
+                font-size: 0.8rem;
+                padding: 0.375rem 0.625rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .alert-responsive {
+                padding: 0.75rem;
+                font-size: 0.85rem;
+            }
+            
+            .alert-responsive .alert-icon {
+                font-size: 1rem;
+                margin-right: 0.5rem;
+            }
+            
+            .validation-message {
+                font-size: 0.75rem;
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-tooth me-2"></i>Dental Clinic
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/appointments">Appointments</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/calendar">Calendar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/patients">Patients</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container text-center">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-users me-3"></i>Patient Management
+            </h1>
+            <p class="lead mb-0">View and manage patient information and appointment history</p>
+        </div>
+    </section>
+
+    <!-- Success Message -->
+    {% if request.args.get('success') == 'patient_updated' %}
+    <section class="py-3">
+        <div class="container">
+            <div class="alert-responsive alert-success">
+                <div class="alert-content">
+                    <div class="alert-text">
+                        <i class="fas fa-check-circle alert-icon"></i>
+                        <strong>Success!</strong> Patient information has been updated successfully.
+                    </div>
+                    <div class="alert-actions">
+                        <button type="button" class="btn-close" onclick="this.parentElement.parentElement.parentElement.remove()"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Stats Section -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <i class="fas fa-users fa-2x text-primary mb-3"></i>
+                        <h4 class="fw-bold">{{ total_patients }}</h4>
+                        <p class="text-muted mb-0">Total Patients</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <i class="fas fa-calendar-check fa-2x text-success mb-3"></i>
+                        <h4 class="fw-bold">
+                            {% set total_appointments = 0 %}
+                            {% for patient in patients %}
+                                {% set total_appointments = total_appointments + patient[6] %}
+                            {% endfor %}
+                            {{ total_appointments }}
+                        </h4>
+                        <p class="text-muted mb-0">Appointments on This Page</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <i class="fas fa-chart-line fa-2x text-info mb-3"></i>
+                        <h4 class="fw-bold">
+                            {% set total_appointments = 0 %}
+                            {% for patient in patients %}
+                                {% set total_appointments = total_appointments + patient[6] %}
+                            {% endfor %}
+                            {% if patients|length > 0 %}
+                                {{ "%.1f"|format(total_appointments / patients|length) }}
+                            {% else %}
+                                0.0
+                            {% endif %}
+                        </h4>
+                        <p class="text-muted mb-0">Avg Appointments/Patient</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Section -->
+    <section class="py-4">
+        <div class="container">
+            <div class="search-container">
+                <form method="GET" class="row g-3 align-items-end">
+                    <div class="col-md-6">
+                        <label for="search" class="form-label fw-bold">
+                            <i class="fas fa-search me-2 text-primary"></i>Search Patients
+                        </label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ search_query }}" placeholder="Search by patient name">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="per_page" class="form-label fw-bold">
+                            <i class="fas fa-list me-2 text-primary"></i>Records per Page
+                        </label>
+                        <select class="form-select" id="per_page" name="per_page" onchange="changePerPage(this.value)">
+                            <option value="5" {% if per_page == 5 %}selected{% endif %}>5</option>
+                            <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                            <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+                            <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                            <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-custom" style="display: flex; align-items: center;">
+                                <i class="fas fa-search me-2" style="font-size: 0.8rem;"></i>Search
+                            </button>
+                            <a href="/create-patient" class="btn btn-success btn-custom text-nowrap" style="display: flex; align-items: center; font-size: 0.9rem;">
+                                <i class="fas fa-user-plus me-2" style="font-size: 0.8rem;"></i>Create
+                            </a>
+                            {% if search_query %}
+                            <a href="/patients?per_page={{ per_page }}" class="btn btn-outline-secondary btn-custom">
+                                <i class="fas fa-times me-2"></i>Clear
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Patients Table -->
+    <section class="py-4">
+        <div class="container">
+            {% if patients %}
+            <div class="patients-container">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Patient Name</th>
+                                <th>Total Appointments</th>
+                                <th>First Appointment</th>
+                                <th>Last Appointment</th>
+                                <th>View</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for patient in patients %}
+                            <tr>
+                                <td>
+                                    <i class="fas fa-user me-2"></i>{{ patient[1] }}
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ patient[6] }}</span>
+                                </td>
+                                <td>
+                                    {% if patient[7] %}
+                                    <i class="fas fa-calendar me-2 text-muted"></i>{{ patient[7] }}
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if patient[8] %}
+                                    <i class="fas fa-calendar me-2 text-muted"></i>{{ patient[8] }}
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="/patient/{{ patient[1]|urlencode }}" class="btn btn-outline-primary" title="View Patient">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users-slash"></i>
+                <h3 class="mb-3">No Patients Found</h3>
+                <p class="lead mb-4">
+                    {% if search_query %}
+                    No patients match your search criteria. Try a different search term.
+                    {% else %}
+                    No patients have been registered yet. Start by creating your first patient.
+                    {% endif %}
+                </p>
+                <a href="/create-patient" class="btn btn-primary btn-custom">
+                    <i class="fas fa-user-plus me-2"></i>Create First Patient
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Pagination Section -->
+    {% if total_pages > 1 %}
+    <section class="py-3">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted mb-0">
+                        Showing {{ (page - 1) * per_page + 1 }} to {{ [page * per_page, total_patients]|min }} of {{ total_patients }} patients
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <nav aria-label="Patient pagination">
+                        <ul class="pagination justify-content-end mb-0">
+                            <!-- Previous Page -->
+                            {% if page > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('patients', page=page-1, per_page=per_page, search=search_query) }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    <i class="fas fa-chevron-left"></i>
+                                </span>
+                            </li>
+                            {% endif %}
+
+                            <!-- Page Numbers -->
+                            {% set start_page = [1, page - 2]|max %}
+                            {% set end_page = [total_pages, page + 2]|min %}
+                            
+                            {% if start_page > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('patients', page=1, per_page=per_page, search=search_query) }}">1</a>
+                            </li>
+                            {% if start_page > 2 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                            {% endif %}
+
+                            {% for p in range(start_page, end_page + 1) %}
+                            <li class="page-item {% if p == page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('patients', page=p, per_page=per_page, search=search_query) }}">{{ p }}</a>
+                            </li>
+                            {% endfor %}
+
+                            {% if end_page < total_pages %}
+                            {% if end_page < total_pages - 1 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('patients', page=total_pages, per_page=per_page, search=search_query) }}">{{ total_pages }}</a>
+                            </li>
+                            {% endif %}
+
+                            <!-- Next Page -->
+                            {% if page < total_pages %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('patients', page=page+1, per_page=per_page, search=search_query) }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    <i class="fas fa-chevron-right"></i>
+                                </span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <section class="py-4">
+        <div class="container">
+            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                <a href="/" class="btn btn-primary btn-custom">
+                    <i class="fas fa-home me-2"></i>Back to Home
+                </a>
+                <a href="/appointments" class="btn btn-success btn-custom">
+                    <i class="fas fa-list me-2"></i>View Appointments
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2025 Dental Clinic. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Responsive Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="mb-0 fs-5">Are you sure you want to delete this patient and all their appointments?</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showDeleteConfirmation(deleteUrl) {
+            const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+            modal.show();
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            // Remove previous click handlers
+            confirmBtn.onclick = null;
+            confirmBtn.onclick = function() {
+                // Preserve scroll position before navigation
+                if (window.scrollManager) {
+                    window.scrollManager.preserveScrollOnNavigation(deleteUrl);
+                } else {
+                    window.location.href = deleteUrl;
+                }
+            };
+        }
+        
+        // Function to handle per_page changes with scroll preservation
+        function changePerPage(newPerPage) {
+            const searchQuery = document.getElementById('search').value;
+            let url = '/patients?per_page=' + newPerPage;
+            if (searchQuery) {
+                url += '&search=' + encodeURIComponent(searchQuery);
+            }
+            
+            // Store scroll position
+            const scrollPosition = window.scrollY;
+            
+            // Use AJAX to fetch and update only the table and pagination
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.text())
+                .then(html => {
+                    // Parse the returned HTML
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    
+                    // Extract the patients table
+                    const newTable = tempDiv.querySelector('.patients-container');
+                    const currentTable = document.querySelector('.patients-container');
+                    if (newTable && currentTable) {
+                        currentTable.innerHTML = newTable.innerHTML;
+                    }
+                    
+                    // Handle pagination section update
+                    const newPaginationSection = tempDiv.querySelector('section.py-3');
+                    const currentPaginationSection = findPaginationSection();
+                    
+                    if (newPaginationSection) {
+                        // New response has pagination
+                        if (currentPaginationSection) {
+                            // Current page has pagination, update it
+                            currentPaginationSection.innerHTML = newPaginationSection.innerHTML;
+                        } else {
+                            // Current page doesn't have pagination, add it
+                            const actionButtonsSection = findActionButtonsSection();
+                            if (actionButtonsSection) {
+                                actionButtonsSection.insertAdjacentHTML('beforebegin', newPaginationSection.outerHTML);
+                            }
+                        }
+                    } else {
+                        // New response doesn't have pagination
+                        if (currentPaginationSection) {
+                            // Current page has pagination, remove it
+                            currentPaginationSection.remove();
+                        }
+                    }
+                    
+                    // Update the URL without reloading
+                    history.pushState({}, '', url);
+                    
+                    // Restore scroll position
+                    setTimeout(() => {
+                        window.scrollTo(0, scrollPosition);
+                    }, 50);
+                })
+                .catch(() => {
+                    // Fallback to full navigation if AJAX fails
+                    if (window.scrollManager) {
+                        window.scrollManager.preserveScrollOnNavigation(url);
+                    } else {
+                        window.location.href = url;
+                    }
+                });
+        }
+
+        // Helper function to find pagination section
+        function findPaginationSection() {
+            // Look for the pagination section (section with py-3 class that contains pagination)
+            const sections = document.querySelectorAll('section.py-3');
+            for (let section of sections) {
+                if (section.querySelector('.pagination')) {
+                    return section;
+                }
+            }
+            return null;
+        }
+
+        // Helper function to find action buttons section
+        function findActionButtonsSection() {
+            // Look for the action buttons section (section with py-4 class that contains action buttons)
+            // We need to be more specific to avoid finding the search section
+            const sections = document.querySelectorAll('section.py-4');
+            for (let section of sections) {
+                // Check if this section contains the specific action buttons (Back to Home, View Appointments)
+                const homeButton = section.querySelector('a[href="/"]');
+                const appointmentsButton = section.querySelector('a[href="/appointments"]');
+                if (homeButton && appointmentsButton) {
+                    return section;
+                }
+            }
+            return null;
+        }
+
+        // Intercept search form submission for AJAX
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchForm = document.querySelector('.search-container form');
+            if (searchForm) {
+                searchForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const searchQuery = document.getElementById('search').value;
+                    const perPage = document.getElementById('per_page').value;
+                    let url = '/patients?per_page=' + perPage;
+                    if (searchQuery) {
+                        url += '&search=' + encodeURIComponent(searchQuery);
+                    }
+                    
+                    // Store scroll position
+                    const scrollPosition = window.scrollY;
+                    
+                    // Use AJAX to fetch and update only the table and pagination
+                    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                        .then(response => response.text())
+                        .then(html => {
+                            // Parse the returned HTML
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = html;
+                            
+                            // Extract the patients table
+                            const newTable = tempDiv.querySelector('.patients-container');
+                            const currentTable = document.querySelector('.patients-container');
+                            if (newTable && currentTable) {
+                                currentTable.innerHTML = newTable.innerHTML;
+                            }
+                            
+                            // Handle pagination section update
+                            const newPaginationSection = tempDiv.querySelector('section.py-3');
+                            const currentPaginationSection = findPaginationSection();
+                            
+                            if (newPaginationSection) {
+                                // New response has pagination
+                                if (currentPaginationSection) {
+                                    // Current page has pagination, update it
+                                    currentPaginationSection.innerHTML = newPaginationSection.innerHTML;
+                                } else {
+                                    // Current page doesn't have pagination, add it
+                                    const actionButtonsSection = findActionButtonsSection();
+                                    if (actionButtonsSection) {
+                                        actionButtonsSection.insertAdjacentHTML('beforebegin', newPaginationSection.outerHTML);
+                                    }
+                                }
+                            } else {
+                                // New response doesn't have pagination
+                                if (currentPaginationSection) {
+                                    // Current page has pagination, remove it
+                                    currentPaginationSection.remove();
+                                }
+                            }
+                            
+                            // Update the URL without reloading
+                            history.pushState({}, '', url);
+                            
+                            // Restore scroll position
+                            setTimeout(() => {
+                                window.scrollTo(0, scrollPosition);
+                            }, 50);
+                        })
+                        .catch(() => {
+                            // Fallback to full navigation if AJAX fails
+                            if (window.scrollManager) {
+                                window.scrollManager.preserveScrollOnNavigation(url);
+                            } else {
+                                window.location.href = url;
+                            }
+                        });
+                });
+            }
+            
+            // Intercept pagination link clicks for AJAX navigation
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.pagination .page-link')) {
+                    e.preventDefault();
+                    const link = e.target.closest('.page-link');
+                    const href = link.getAttribute('href');
+                    
+                    console.log('Pagination link clicked:', href);
+                    console.log('Link element:', link);
+                    
+                    if (href && !link.classList.contains('disabled')) {
+                        // Store scroll position
+                        const scrollPosition = window.scrollY;
+                        
+                        // Use AJAX to fetch the new page
+                        fetch(href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                            .then(response => response.text())
+                            .then(html => {
+                                console.log('AJAX response received, length:', html.length);
+                                
+                                // Parse the returned HTML
+                                const tempDiv = document.createElement('div');
+                                tempDiv.innerHTML = html;
+                                
+                                // Extract the patients table
+                                const newTable = tempDiv.querySelector('.patients-container');
+                                const currentTable = document.querySelector('.patients-container');
+                                if (newTable && currentTable) {
+                                    currentTable.innerHTML = newTable.innerHTML;
+                                    console.log('Patients table updated');
+                                }
+                                
+                                // Handle pagination section update
+                                const newPaginationSection = tempDiv.querySelector('section.py-3');
+                                const currentPaginationSection = findPaginationSection();
+                                
+                                console.log('New pagination section found:', !!newPaginationSection);
+                                console.log('Current pagination section found:', !!currentPaginationSection);
+                                
+                                if (newPaginationSection) {
+                                    console.log('New pagination HTML:', newPaginationSection.outerHTML.substring(0, 200) + '...');
+                                    
+                                    // New response has pagination
+                                    if (currentPaginationSection) {
+                                        // Current page has pagination, update it
+                                        console.log('Updating existing pagination section');
+                                        currentPaginationSection.innerHTML = newPaginationSection.innerHTML;
+                                    } else {
+                                        // Current page doesn't have pagination, add it
+                                        console.log('Adding new pagination section');
+                                        const actionButtonsSection = findActionButtonsSection();
+                                        if (actionButtonsSection) {
+                                            actionButtonsSection.insertAdjacentHTML('beforebegin', newPaginationSection.outerHTML);
+                                            console.log('Pagination section added successfully');
+                                        } else {
+                                            console.log('Could not find action buttons section');
+                                        }
+                                    }
+                                } else {
+                                    // New response doesn't have pagination
+                                    if (currentPaginationSection) {
+                                        // Current page has pagination, remove it
+                                        console.log('Removing pagination section');
+                                        currentPaginationSection.remove();
+                                    } else {
+                                        console.log('No pagination in new response and none currently exists');
+                                    }
+                                }
+                                
+                                // Update the URL without reloading
+                                history.pushState({}, '', href);
+                                
+                                // Restore scroll position
+                                setTimeout(() => {
+                                    window.scrollTo(0, scrollPosition);
+                                }, 50);
+                            })
+                            .catch((error) => {
+                                console.error('AJAX error:', error);
+                                // Fallback to full navigation if AJAX fails
+                                if (window.scrollManager) {
+                                    window.scrollManager.preserveScrollOnNavigation(href);
+                                } else {
+                                    window.location.href = href;
+                                }
+                            });
+                    } else {
+                        console.log('Link is disabled or has no href');
+                    }
+                }
+            });
+        });
+    </script>
+    
+    <!-- Global Scroll Position Preservation System -->
+    <script>
+        // Global scroll position management
+        class ScrollPositionManager {
+            constructor() {
+                this.scrollPosition = 0;
+                this.init();
+            }
+            
+            init() {
+                // Store scroll position before any navigation
+                this.storeScrollPosition();
+                
+                // Listen for beforeunload to save position
+                window.addEventListener('beforeunload', () => {
+                    this.saveScrollPosition();
+                });
+                
+                // Restore scroll position on page load
+                window.addEventListener('load', () => {
+                    this.restoreScrollPosition();
+                });
+                
+                // Store position on scroll
+                window.addEventListener('scroll', () => {
+                    this.scrollPosition = window.scrollY;
+                });
+            }
+            
+            storeScrollPosition() {
+                this.scrollPosition = window.scrollY;
+            }
+            
+            saveScrollPosition() {
+                // Save to sessionStorage for cross-page persistence
+                sessionStorage.setItem('scrollPosition', this.scrollPosition.toString());
+                sessionStorage.setItem('scrollTimestamp', Date.now().toString());
+            }
+            
+            restoreScrollPosition() {
+                const savedPosition = sessionStorage.getItem('scrollPosition');
+                const timestamp = sessionStorage.getItem('scrollTimestamp');
+                
+                if (savedPosition && timestamp) {
+                    const timeDiff = Date.now() - parseInt(timestamp);
+                    // Only restore if within 5 minutes (300000ms)
+                    if (timeDiff < 300000) {
+                        setTimeout(() => {
+                            window.scrollTo(0, parseInt(savedPosition));
+                        }, 100);
+                    }
+                }
+            }
+            
+            // Method to preserve scroll during form submission
+            preserveScrollOnSubmit(formElement) {
+                const originalSubmit = formElement.onsubmit;
+                
+                formElement.onsubmit = (e) => {
+                    this.saveScrollPosition();
+                    if (originalSubmit) {
+                        return originalSubmit.call(formElement, e);
+                    }
+                };
+            }
+            
+            // Method to preserve scroll during navigation
+            preserveScrollOnNavigation(url) {
+                this.saveScrollPosition();
+                window.location.href = url;
+            }
+            
+            // Method for AJAX navigation with scroll preservation
+            navigateWithScrollPreservation(url, callback) {
+                this.saveScrollPosition();
+                
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        // Parse and update content
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = html;
+                        
+                        // Extract main content (adjust selector as needed)
+                        const newContent = tempDiv.querySelector('main, .container, .content');
+                        const currentContent = document.querySelector('main, .container, .content');
+                        
+                        if (newContent && currentContent) {
+                            currentContent.innerHTML = newContent.innerHTML;
+                            
+                            // Update URL without reload
+                            history.pushState({}, '', url);
+                            
+                            // Restore scroll position
+                            setTimeout(() => {
+                                this.restoreScrollPosition();
+                            }, 100);
+                            
+                            if (callback) callback();
+                        } else {
+                            // Fallback to normal navigation
+                            window.location.href = url;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Navigation error:', error);
+                        window.location.href = url;
+                    });
+            }
+        }
+        
+        // Initialize scroll position manager
+        const scrollManager = new ScrollPositionManager();
+        
+        // Make it globally available
+        window.scrollManager = scrollManager;
+        
+        // Auto-preserve scroll on all forms
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form[method="POST"]');
+            forms.forEach(form => {
+                scrollManager.preserveScrollOnSubmit(form);
+            });
+        });
+    </script>
+</body>
+</html> 
