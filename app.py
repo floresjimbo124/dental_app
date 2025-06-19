@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, jsonify, url_for
+from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
 import sqlite3
 import os
 from datetime import datetime, date
 import calendar
+import json
 
 app = Flask(__name__)
+app.secret_key = "your-very-secret-key"
 
 # Jinja filter for 12-hour time format
 @app.template_filter('ampm')
@@ -24,7 +26,7 @@ def init_db():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
-    # Create Patients table
+    # Create Patients table with additional fields
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Patients (
             ID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,6 +37,46 @@ def init_db():
             Address TEXT,
             EmergencyContact TEXT,
             MedicalHistory TEXT,
+            Religion TEXT,
+            HomeAddress TEXT,
+            Occupation TEXT,
+            DentalInsurance TEXT,
+            EffectiveDate TEXT,
+            ParentGuardianName TEXT,
+            ParentGuardianOccupation TEXT,
+            ReferralSource TEXT,
+            ConsultationReason TEXT,
+            DentalHistory TEXT,
+            PreviousDentist TEXT,
+            LastDentalVisit TEXT,
+            Sex TEXT,
+            Nickname TEXT,
+            Age TEXT,
+            Nationality TEXT,
+            GoodHealth TEXT,
+            MedicalTreatment TEXT,
+            TreatmentCondition TEXT,
+            SeriousIllness TEXT,
+            SurgicalOperation TEXT,
+            Hospitalized TEXT,
+            HospitalizationDetails TEXT,
+            PrescriptionMedication TEXT,
+            NonPrescriptionMedication TEXT,
+            TobaccoUse TEXT,
+            AlcoholDrugUse TEXT,
+            AllergicLocalAnesthetic TEXT,
+            AllergicPenicillin TEXT,
+            AllergicAntibiotics TEXT,
+            AllergicSulfaDrugs TEXT,
+            AllergicAspirin TEXT,
+            AllergicLatex TEXT,
+            AllergicOthers TEXT,
+            BleedingTime TEXT,
+            Pregnant TEXT,
+            Nursing TEXT,
+            BirthPills TEXT,
+            BloodType TEXT,
+            BloodPressure TEXT,
             CreatedDate TEXT DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -48,6 +90,22 @@ def init_db():
             Date TEXT NOT NULL,
             Time TEXT NOT NULL,
             DentalCare TEXT NOT NULL
+        )
+    ''')
+    
+    # Create DentalCharts table for intraoral examination
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS DentalCharts (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            PatientID INTEGER NOT NULL,
+            ToothNumber TEXT NOT NULL,
+            Condition TEXT,
+            Treatment TEXT,
+            Notes TEXT,
+            ExamDate TEXT DEFAULT CURRENT_TIMESTAMP,
+            SliceColors TEXT,
+            FOREIGN KEY (PatientID) REFERENCES Patients (ID),
+            UNIQUE(PatientID, ToothNumber)
         )
     ''')
     
@@ -124,6 +182,48 @@ def create_patient():
         address = request.form.get('address', '')
         emergency_contact = request.form.get('emergency_contact', '')
         medical_history = request.form.get('medical_history', '')
+        religion = request.form.get('religion', '')
+        home_address = request.form.get('home_address', '')
+        occupation = request.form.get('occupation', '')
+        dental_insurance = request.form.get('dental_insurance', '')
+        effective_date = request.form.get('effective_date', '')
+        parent_guardian_name = request.form.get('parent_guardian_name', '')
+        parent_guardian_occupation = request.form.get('parent_guardian_occupation', '')
+        referral_source = request.form.get('referral_source', '')
+        consultation_reason = request.form.get('consultation_reason', '')
+        dental_history = request.form.get('dental_history', '')
+        previous_dentist = request.form.get('previous_dentist', '')
+        last_dental_visit = request.form.get('last_dental_visit', '')
+        sex = request.form.get('sex', '')
+        nickname = request.form.get('nickname', '')
+        age = request.form.get('age', '')
+        nationality = request.form.get('nationality', '')
+        
+        # Medical History Fields
+        good_health = request.form.get('good_health', '')
+        medical_treatment = request.form.get('medical_treatment', '')
+        treatment_condition = request.form.get('treatment_condition', '')
+        serious_illness = request.form.get('serious_illness', '')
+        surgical_operation = request.form.get('surgical_operation', '')
+        hospitalized = request.form.get('hospitalized', '')
+        hospitalization_details = request.form.get('hospitalization_details', '')
+        prescription_medication = request.form.get('prescription_medication', '')
+        non_prescription_medication = request.form.get('non_prescription_medication', '')
+        tobacco_use = request.form.get('tobacco_use', '')
+        alcohol_drug_use = request.form.get('alcohol_drug_use', '')
+        allergic_local_anesthetic = request.form.get('allergic_local_anesthetic', '')
+        allergic_penicillin = request.form.get('allergic_penicillin', '')
+        allergic_antibiotics = request.form.get('allergic_antibiotics', '')
+        allergic_sulfa_drugs = request.form.get('allergic_sulfa_drugs', '')
+        allergic_aspirin = request.form.get('allergic_aspirin', '')
+        allergic_latex = request.form.get('allergic_latex', '')
+        allergic_others = request.form.get('allergic_others', '')
+        bleeding_time = request.form.get('bleeding_time', '')
+        pregnant = request.form.get('pregnant', '')
+        nursing = request.form.get('nursing', '')
+        birth_pills = request.form.get('birth_pills', '')
+        blood_type = request.form.get('blood_type', '')
+        blood_pressure = request.form.get('blood_pressure', '')
         
         # Validate required fields
         if not name or not contact:
@@ -135,9 +235,25 @@ def create_patient():
         
         try:
             cursor.execute("""
-                INSERT INTO Patients (Name, Contact, Email, DateOfBirth, Address, EmergencyContact, MedicalHistory)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (name, contact, email, date_of_birth, address, emergency_contact, medical_history))
+                INSERT INTO Patients (Name, Contact, Email, DateOfBirth, Address, EmergencyContact, MedicalHistory,
+                                    Religion, HomeAddress, Occupation, DentalInsurance, EffectiveDate,
+                                    ParentGuardianName, ParentGuardianOccupation, ReferralSource, ConsultationReason,
+                                    DentalHistory, PreviousDentist, LastDentalVisit, Sex, Nickname, Age, Nationality,
+                                    GoodHealth, MedicalTreatment, TreatmentCondition, SeriousIllness, SurgicalOperation,
+                                    Hospitalized, HospitalizationDetails, PrescriptionMedication, NonPrescriptionMedication,
+                                    TobaccoUse, AlcoholDrugUse, AllergicLocalAnesthetic, AllergicPenicillin, AllergicAntibiotics,
+                                    AllergicSulfaDrugs, AllergicAspirin, AllergicLatex, AllergicOthers, BleedingTime,
+                                    Pregnant, Nursing, BirthPills, BloodType, BloodPressure)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (name, contact, email, date_of_birth, address, emergency_contact, medical_history,
+                  religion, home_address, occupation, dental_insurance, effective_date,
+                  parent_guardian_name, parent_guardian_occupation, referral_source, consultation_reason,
+                  dental_history, previous_dentist, last_dental_visit, sex, nickname, age, nationality,
+                  good_health, medical_treatment, treatment_condition, serious_illness, surgical_operation,
+                  hospitalized, hospitalization_details, prescription_medication, non_prescription_medication,
+                  tobacco_use, alcohol_drug_use, allergic_local_anesthetic, allergic_penicillin, allergic_antibiotics,
+                  allergic_sulfa_drugs, allergic_aspirin, allergic_latex, allergic_others, bleeding_time,
+                  pregnant, nursing, birth_pills, blood_type, blood_pressure))
             conn.commit()
             conn.close()
             
@@ -163,6 +279,48 @@ def edit_patient(patient_id):
         address = request.form.get('address', '')
         emergency_contact = request.form.get('emergency_contact', '')
         medical_history = request.form.get('medical_history', '')
+        religion = request.form.get('religion', '')
+        home_address = request.form.get('home_address', '')
+        occupation = request.form.get('occupation', '')
+        dental_insurance = request.form.get('dental_insurance', '')
+        effective_date = request.form.get('effective_date', '')
+        parent_guardian_name = request.form.get('parent_guardian_name', '')
+        parent_guardian_occupation = request.form.get('parent_guardian_occupation', '')
+        referral_source = request.form.get('referral_source', '')
+        consultation_reason = request.form.get('consultation_reason', '')
+        dental_history = request.form.get('dental_history', '')
+        previous_dentist = request.form.get('previous_dentist', '')
+        last_dental_visit = request.form.get('last_dental_visit', '')
+        sex = request.form.get('sex', '')
+        nickname = request.form.get('nickname', '')
+        age = request.form.get('age', '')
+        nationality = request.form.get('nationality', '')
+        
+        # Medical History Fields
+        good_health = request.form.get('good_health', '')
+        medical_treatment = request.form.get('medical_treatment', '')
+        treatment_condition = request.form.get('treatment_condition', '')
+        serious_illness = request.form.get('serious_illness', '')
+        surgical_operation = request.form.get('surgical_operation', '')
+        hospitalized = request.form.get('hospitalized', '')
+        hospitalization_details = request.form.get('hospitalization_details', '')
+        prescription_medication = request.form.get('prescription_medication', '')
+        non_prescription_medication = request.form.get('non_prescription_medication', '')
+        tobacco_use = request.form.get('tobacco_use', '')
+        alcohol_drug_use = request.form.get('alcohol_drug_use', '')
+        allergic_local_anesthetic = request.form.get('allergic_local_anesthetic', '')
+        allergic_penicillin = request.form.get('allergic_penicillin', '')
+        allergic_antibiotics = request.form.get('allergic_antibiotics', '')
+        allergic_sulfa_drugs = request.form.get('allergic_sulfa_drugs', '')
+        allergic_aspirin = request.form.get('allergic_aspirin', '')
+        allergic_latex = request.form.get('allergic_latex', '')
+        allergic_others = request.form.get('allergic_others', '')
+        bleeding_time = request.form.get('bleeding_time', '')
+        pregnant = request.form.get('pregnant', '')
+        nursing = request.form.get('nursing', '')
+        birth_pills = request.form.get('birth_pills', '')
+        blood_type = request.form.get('blood_type', '')
+        blood_pressure = request.form.get('blood_pressure', '')
         
         # Validate required fields
         if not name or not contact:
@@ -170,20 +328,65 @@ def edit_patient(patient_id):
             patient = cursor.fetchone()
             conn.close()
             
+            # Create specific error messages
+            error_messages = []
+            if not name:
+                error_messages.append("Patient name is required")
+            if not contact:
+                error_messages.append("Contact number is required")
+            
+            error_message = " and ".join(error_messages) + "."
+            
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({'success': False, 'error': 'Name and Contact are required fields.'}), 400
+                return jsonify({'success': False, 'error': error_message}), 400
             
             return render_template('edit_patient.html', 
                                  patient=patient, 
-                                 error_message="Name and Contact are required fields.")
+                                 error_message=error_message)
+        
+        # Additional validation for email if provided
+        if email and not email.strip():
+            email = ''  # Convert empty string to None for database
+        elif email:
+            import re
+            email_pattern = re.compile(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+            if not email_pattern.match(email):
+                cursor.execute("SELECT * FROM Patients WHERE ID = ?", (patient_id,))
+                patient = cursor.fetchone()
+                conn.close()
+                
+                error_message = "Please provide a valid email address."
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({'success': False, 'error': error_message}), 400
+                
+                return render_template('edit_patient.html', 
+                                     patient=patient, 
+                                     error_message=error_message)
         
         try:
             cursor.execute("""
                 UPDATE Patients 
                 SET Name = ?, Contact = ?, Email = ?, DateOfBirth = ?, 
-                    Address = ?, EmergencyContact = ?, MedicalHistory = ?
+                    Address = ?, EmergencyContact = ?, MedicalHistory = ?,
+                    Religion = ?, HomeAddress = ?, Occupation = ?, DentalInsurance = ?, EffectiveDate = ?,
+                    ParentGuardianName = ?, ParentGuardianOccupation = ?, ReferralSource = ?, ConsultationReason = ?,
+                    DentalHistory = ?, PreviousDentist = ?, LastDentalVisit = ?, Sex = ?, Nickname = ?, Age = ?, Nationality = ?,
+                    GoodHealth = ?, MedicalTreatment = ?, TreatmentCondition = ?, SeriousIllness = ?, SurgicalOperation = ?,
+                    Hospitalized = ?, HospitalizationDetails = ?, PrescriptionMedication = ?, NonPrescriptionMedication = ?,
+                    TobaccoUse = ?, AlcoholDrugUse = ?, AllergicLocalAnesthetic = ?, AllergicPenicillin = ?, AllergicAntibiotics = ?,
+                    AllergicSulfaDrugs = ?, AllergicAspirin = ?, AllergicLatex = ?, AllergicOthers = ?, BleedingTime = ?,
+                    Pregnant = ?, Nursing = ?, BirthPills = ?, BloodType = ?, BloodPressure = ?
                 WHERE ID = ?
-            """, (name, contact, email, date_of_birth, address, emergency_contact, medical_history, patient_id))
+            """, (name, contact, email, date_of_birth, address, emergency_contact, medical_history,
+                  religion, home_address, occupation, dental_insurance, effective_date,
+                  parent_guardian_name, parent_guardian_occupation, referral_source, consultation_reason,
+                  dental_history, previous_dentist, last_dental_visit, sex, nickname, age, nationality,
+                  good_health, medical_treatment, treatment_condition, serious_illness, surgical_operation,
+                  hospitalized, hospitalization_details, prescription_medication, non_prescription_medication,
+                  tobacco_use, alcohol_drug_use, allergic_local_anesthetic, allergic_penicillin, allergic_antibiotics,
+                  allergic_sulfa_drugs, allergic_aspirin, allergic_latex, allergic_others, bleeding_time,
+                  pregnant, nursing, birth_pills, blood_type, blood_pressure, patient_id))
             conn.commit()
             conn.close()
             
@@ -191,7 +394,7 @@ def edit_patient(patient_id):
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({'success': True, 'message': 'Patient updated successfully'})
             
-            return redirect('/patients')
+            return redirect('/patients?success=patient_updated')
         except sqlite3.IntegrityError:
             conn.close()
             cursor.execute("SELECT * FROM Patients WHERE ID = ?", (patient_id,))
@@ -780,6 +983,52 @@ def add():
     # GET request - show form with optional pre-filled patient name
     patient_name = request.args.get('patient', '')
     return render_template('add_appointment.html', patient_name=patient_name)
+
+@app.route('/patient/<patient_name>/treatment-records', methods=['GET', 'POST'])
+def treatment_records(patient_name):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    # Get patient info
+    cursor.execute("SELECT ID, Name FROM Patients WHERE Name = ?", (patient_name,))
+    patient = cursor.fetchone()
+    if not patient:
+        conn.close()
+        return redirect('/patients')
+    patient_id = patient[0]
+    error_message = None
+    # Handle new record submission
+    if request.method == 'POST':
+        date_of_treatment = request.form['date_of_treatment']
+        tooth_number = request.form.get('tooth_number', '')
+        procedure = request.form.get('procedure', '')
+        dentist_name = request.form.get('dentist_name', '')
+        amount_charged = float(request.form.get('amount_charged', 0))
+        amount_paid = float(request.form.get('amount_paid', 0))
+        balance = amount_charged - amount_paid
+        if not date_of_treatment:
+            error_message = 'Date of treatment is required.'
+        else:
+            cursor.execute('''
+                INSERT INTO TreatmentRecords
+                (PatientID, DateOfTreatment, ToothNumber, Procedure, DentistName, AmountCharged, AmountPaid, Balance)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (patient_id, date_of_treatment, tooth_number, procedure, dentist_name, amount_charged, amount_paid, balance))
+            conn.commit()
+            flash('Treatment record added successfully!', 'success')
+    # Get all treatment records for this patient
+    cursor.execute('''
+        SELECT DateOfTreatment, ToothNumber, Procedure, DentistName, AmountCharged, AmountPaid, Balance
+        FROM TreatmentRecords WHERE PatientID = ? ORDER BY DateOfTreatment DESC
+    ''', (patient_id,))
+    records = cursor.fetchall()
+    conn.close()
+    return render_template(
+        'treatment_records.html',
+        patient=patient,
+        records=records,
+        error_message=error_message,
+        today=date.today().isoformat()
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -2,80 +2,82 @@ import sqlite3
 import os
 
 def migrate_database():
-    """Migrate the database to include the new Patients table and migrate existing data"""
+    """Migrate existing database to include new patient fields"""
+    DB_FILE = "dental.db"
     
-    # Check if dental.db exists
-    if not os.path.exists('dental.db'):
+    if not os.path.exists(DB_FILE):
         print("Database file not found. Creating new database...")
         return
     
-    conn = sqlite3.connect('dental.db')
+    conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
-    try:
-        # Create Patients table if it doesn't exist
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS Patients (
-                ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                Name TEXT NOT NULL UNIQUE,
-                Contact TEXT NOT NULL,
-                Email TEXT,
-                DateOfBirth TEXT,
-                Address TEXT,
-                EmergencyContact TEXT,
-                MedicalHistory TEXT,
-                CreatedDate TEXT DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Get all unique patients from appointments
-        cursor.execute("""
-            SELECT DISTINCT PatientName, Contact 
-            FROM Appointments 
-            ORDER BY PatientName
-        """)
-        
-        unique_patients = cursor.fetchall()
-        print(f"Found {len(unique_patients)} unique patients in appointments")
-        
-        # Insert each unique patient into the Patients table
-        migrated_count = 0
-        for patient_name, contact in unique_patients:
+    # List of new columns to add
+    new_columns = [
+        ('Religion', 'TEXT'),
+        ('HomeAddress', 'TEXT'),
+        ('Occupation', 'TEXT'),
+        ('DentalInsurance', 'TEXT'),
+        ('EffectiveDate', 'TEXT'),
+        ('ParentGuardianName', 'TEXT'),
+        ('ParentGuardianOccupation', 'TEXT'),
+        ('ReferralSource', 'TEXT'),
+        ('ConsultationReason', 'TEXT'),
+        ('DentalHistory', 'TEXT'),
+        ('PreviousDentist', 'TEXT'),
+        ('LastDentalVisit', 'TEXT'),
+        ('Sex', 'TEXT'),
+        ('Nickname', 'TEXT'),
+        ('Age', 'TEXT'),
+        ('Nationality', 'TEXT'),
+        ('GoodHealth', 'TEXT'),
+        ('MedicalTreatment', 'TEXT'),
+        ('TreatmentCondition', 'TEXT'),
+        ('SeriousIllness', 'TEXT'),
+        ('SurgicalOperation', 'TEXT'),
+        ('Hospitalized', 'TEXT'),
+        ('HospitalizationDetails', 'TEXT'),
+        ('PrescriptionMedication', 'TEXT'),
+        ('NonPrescriptionMedication', 'TEXT'),
+        ('TobaccoUse', 'TEXT'),
+        ('AlcoholDrugUse', 'TEXT'),
+        ('AllergicLocalAnesthetic', 'TEXT'),
+        ('AllergicPenicillin', 'TEXT'),
+        ('AllergicAntibiotics', 'TEXT'),
+        ('AllergicSulfaDrugs', 'TEXT'),
+        ('AllergicAspirin', 'TEXT'),
+        ('AllergicLatex', 'TEXT'),
+        ('AllergicOthers', 'TEXT'),
+        ('BleedingTime', 'TEXT'),
+        ('Pregnant', 'TEXT'),
+        ('Nursing', 'TEXT'),
+        ('BirthPills', 'TEXT'),
+        ('BloodType', 'TEXT'),
+        ('BloodPressure', 'TEXT')
+    ]
+    
+    # Check existing columns
+    cursor.execute("PRAGMA table_info(Patients)")
+    existing_columns = [column[1] for column in cursor.fetchall()]
+    
+    # Add new columns if they don't exist
+    for column_name, column_type in new_columns:
+        if column_name not in existing_columns:
             try:
-                cursor.execute("""
-                    INSERT INTO Patients (Name, Contact)
-                    VALUES (?, ?)
-                """, (patient_name, contact))
-                print(f"Created patient record for: {patient_name}")
-                migrated_count += 1
-            except sqlite3.IntegrityError:
-                print(f"Patient {patient_name} already exists, skipping...")
-        
-        conn.commit()
-        print(f"Successfully migrated {migrated_count} patients to the Patients table.")
-        
-        # Verify the migration
-        cursor.execute("SELECT COUNT(*) FROM Patients")
-        final_patient_count = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(*) FROM Appointments")
-        appointment_count = cursor.fetchone()[0]
-        
-        print(f"\nDatabase migration completed successfully!")
-        print(f"Total patients: {final_patient_count}")
-        print(f"Total appointments: {appointment_count}")
-        
-        # Show all patients
-        print("\nAll patients in database:")
-        cursor.execute("SELECT Name, Contact FROM Patients ORDER BY Name")
-        patients = cursor.fetchall()
-        for patient in patients:
-            print(f"  - {patient[0]} ({patient[1]})")
-        
+                cursor.execute(f"ALTER TABLE Patients ADD COLUMN {column_name} {column_type}")
+                print(f"Added column: {column_name}")
+            except sqlite3.OperationalError as e:
+                print(f"Error adding column {column_name}: {e}")
+    
+    try:
+        cursor.execute("ALTER TABLE DentalCharts ADD COLUMN SliceColors TEXT")
+        print("SliceColors column added.")
     except Exception as e:
-        print(f"Error during migration: {e}")
-        conn.rollback()
-    finally:
-        conn.close()
+        print("Column may already exist or error occurred:", e)
+    
+    conn.commit()
+    conn.close()
+    print("Database migration completed!")
 
 if __name__ == "__main__":
     migrate_database() 
