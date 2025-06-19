@@ -439,20 +439,47 @@ def appointments():
     selected_date = request.args.get('date', '')
     dental_care_filter = request.args.get('dental_care', '')
     error_message = request.args.get('error', '')
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 15))  # Default 15 records per page
+    
+    # Validate page and per_page parameters
+    if page < 1:
+        page = 1
+    if per_page < 1 or per_page > 100:  # Limit to reasonable range
+        per_page = 15
     
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
-    if selected_date and dental_care_filter:
-        cursor.execute("SELECT * FROM Appointments WHERE Date = ? AND DentalCare LIKE ?", 
-                      (selected_date, f'%{dental_care_filter}%'))
-    elif selected_date:
-        cursor.execute("SELECT * FROM Appointments WHERE Date = ?", (selected_date,))
-    elif dental_care_filter:
-        cursor.execute("SELECT * FROM Appointments WHERE DentalCare LIKE ?", (f'%{dental_care_filter}%',))
-    else:
-        cursor.execute("SELECT * FROM Appointments ORDER BY Date, Time")
+    # Build the base query and count query
+    base_conditions = []
+    params = []
     
+    if selected_date:
+        base_conditions.append("Date = ?")
+        params.append(selected_date)
+    
+    if dental_care_filter:
+        base_conditions.append("DentalCare LIKE ?")
+        params.append(f'%{dental_care_filter}%')
+    
+    where_clause = " AND ".join(base_conditions) if base_conditions else "1=1"
+    
+    # Get total count for pagination
+    count_query = f"SELECT COUNT(*) FROM Appointments WHERE {where_clause}"
+    cursor.execute(count_query, params)
+    total_appointments = cursor.fetchone()[0]
+    
+    # Calculate pagination
+    total_pages = (total_appointments + per_page - 1) // per_page
+    if page > total_pages and total_pages > 0:
+        page = total_pages
+    
+    offset = (page - 1) * per_page
+    
+    # Get appointments with pagination
+    query = f"SELECT * FROM Appointments WHERE {where_clause} ORDER BY Date, Time LIMIT ? OFFSET ?"
+    cursor.execute(query, params + [per_page, offset])
     appointments = cursor.fetchall()
     
     # Get unique dental care types for filter dropdown
@@ -476,56 +503,94 @@ def appointments():
                          dental_care_filter=dental_care_filter,
                          dental_care_types=dental_care_types,
                          error_message=error_message,
-                         current_datetime=current_datetime)
+                         current_datetime=current_datetime,
+                         page=page,
+                         per_page=per_page,
+                         total_appointments=total_appointments,
+                         total_pages=total_pages)
 
 @app.route('/edit/<int:appointment_id>', methods=['GET', 'POST'])
 def edit_appointment(appointment_id):
     if request.method == 'POST':
-        name = request.form['name']
-        contact = request.form['contact']
-        appointment_date = request.form['date']
-        time = request.form['time']
-        dental_care = request.form['dental_care']
+        # Check if it's an AJAX request
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
+        if is_ajax:
+            # Handle AJAX request for modal
+            name = request.form['name']
+            contact = request.form['contact']
+            appointment_date = request.form['date']
+            time = request.form['time']
+            dental_care = request.form['dental_care']
 
-        # Validate appointment date
-        is_valid, error_message = validate_appointment_date(appointment_date, appointment_id)
-        if not is_valid:
-            # Get the appointment data to re-populate the form
+            # Validate appointment date
+            is_valid, error_message = validate_appointment_date(appointment_date, appointment_id)
+            if not is_valid:
+                return jsonify({'success': False, 'error': error_message}), 400
+
+            # Check for appointment conflicts (excluding current appointment)
+            is_available, conflict_message = check_appointment_conflict(appointment_date, time, appointment_id)
+            if not is_available:
+                return jsonify({'success': False, 'error': conflict_message}), 400
+
             conn = sqlite3.connect(DB_FILE)
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM Appointments WHERE ID = ?", (appointment_id,))
-            appointment = cursor.fetchone()
+            cursor.execute("""
+                UPDATE Appointments 
+                SET PatientName = ?, Contact = ?, Date = ?, Time = ?, DentalCare = ?
+                WHERE ID = ?
+            """, (name, contact, appointment_date, time, dental_care, appointment_id))
+            conn.commit()
             conn.close()
-            
-            return render_template('edit_appointment.html', 
-                                 appointment=appointment, 
-                                 error_message=error_message)
 
-        # Check for appointment conflicts (excluding current appointment)
-        is_available, conflict_message = check_appointment_conflict(appointment_date, time, appointment_id)
-        if not is_available:
-            # Get the appointment data to re-populate the form
+            return jsonify({'success': True, 'message': 'Appointment updated successfully'})
+        else:
+            # Handle regular form submission
+            name = request.form['name']
+            contact = request.form['contact']
+            appointment_date = request.form['date']
+            time = request.form['time']
+            dental_care = request.form['dental_care']
+
+            # Validate appointment date
+            is_valid, error_message = validate_appointment_date(appointment_date, appointment_id)
+            if not is_valid:
+                # Get the appointment data to re-populate the form
+                conn = sqlite3.connect(DB_FILE)
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM Appointments WHERE ID = ?", (appointment_id,))
+                appointment = cursor.fetchone()
+                conn.close()
+                
+                return render_template('edit_appointment.html', 
+                                     appointment=appointment, 
+                                     error_message=error_message)
+
+            # Check for appointment conflicts (excluding current appointment)
+            is_available, conflict_message = check_appointment_conflict(appointment_date, time, appointment_id)
+            if not is_available:
+                # Get the appointment data to re-populate the form
+                conn = sqlite3.connect(DB_FILE)
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM Appointments WHERE ID = ?", (appointment_id,))
+                appointment = cursor.fetchone()
+                conn.close()
+                
+                return render_template('edit_appointment.html', 
+                                     appointment=appointment, 
+                                     error_message=conflict_message)
+
             conn = sqlite3.connect(DB_FILE)
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM Appointments WHERE ID = ?", (appointment_id,))
-            appointment = cursor.fetchone()
+            cursor.execute("""
+                UPDATE Appointments 
+                SET PatientName = ?, Contact = ?, Date = ?, Time = ?, DentalCare = ?
+                WHERE ID = ?
+            """, (name, contact, appointment_date, time, dental_care, appointment_id))
+            conn.commit()
             conn.close()
-            
-            return render_template('edit_appointment.html', 
-                                 appointment=appointment, 
-                                 error_message=conflict_message)
 
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
-        cursor.execute("""
-            UPDATE Appointments 
-            SET PatientName = ?, Contact = ?, Date = ?, Time = ?, DentalCare = ?
-            WHERE ID = ?
-        """, (name, contact, appointment_date, time, dental_care, appointment_id))
-        conn.commit()
-        conn.close()
-
-        return redirect('/appointments')
+            return redirect('/appointments')
     
     # GET request - show edit form
     conn = sqlite3.connect(DB_FILE)
@@ -604,6 +669,30 @@ def api_appointments():
         })
     
     return jsonify(appointments_list)
+
+@app.route('/api/appointment/<int:appointment_id>')
+def api_appointment_details(appointment_id):
+    """Get appointment details by ID"""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM Appointments WHERE ID = ?", (appointment_id,))
+    appointment = cursor.fetchone()
+    conn.close()
+    
+    if appointment is None:
+        return jsonify({'success': False, 'error': 'Appointment not found'}), 404
+    
+    appointment_data = {
+        'id': appointment[0],
+        'patient_name': appointment[1],
+        'contact': appointment[2],
+        'date': appointment[3],
+        'time': appointment[4],
+        'dental_care': appointment[5]
+    }
+    
+    return jsonify({'success': True, 'appointment': appointment_data})
 
 @app.route('/api/available-times')
 def api_available_times():
