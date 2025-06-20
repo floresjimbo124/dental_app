@@ -389,9 +389,14 @@
                     <span>
                         <i class="fas fa-user-circle me-2 text-primary"></i>Patient Information
                     </span>
+                    <div>
+                        <a href="{{ url_for('intraoral_exam', patient_name=patient[1]) }}" class="btn btn-info btn-custom btn-sm me-2">
+                            <i class="fas fa-tooth me-1"></i>Intraoral Examination
+                        </a>
                     <button type="button" class="btn btn-warning btn-custom btn-sm" data-bs-toggle="modal" data-bs-target="#editPatientModal">
                         <i class="fas fa-edit me-2"></i>Edit Patient
                     </button>
+                    </div>
                 </h4>
                 <div class="p-4">
                     <!-- Basic Information -->

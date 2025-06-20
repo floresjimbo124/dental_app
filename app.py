@@ -1015,11 +1015,26 @@ def treatment_records(patient_name):
             ''', (patient_id, date_of_treatment, tooth_number, procedure, dentist_name, amount_charged, amount_paid, balance))
             conn.commit()
             flash('Treatment record added successfully!', 'success')
-    # Get all treatment records for this patient
+    # Pagination logic
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 10))  # Default 10 records per page
+    if page < 1:
+        page = 1
+    if per_page < 1 or per_page > 100:
+        per_page = 10
+    # Get total count for pagination
+    cursor.execute('SELECT COUNT(*) FROM TreatmentRecords WHERE PatientID = ?', (patient_id,))
+    total_records = cursor.fetchone()[0]
+    total_pages = (total_records + per_page - 1) // per_page
+    if page > total_pages and total_pages > 0:
+        page = total_pages
+    offset = (page - 1) * per_page
+    # Get paginated treatment records for this patient
     cursor.execute('''
         SELECT DateOfTreatment, ToothNumber, Procedure, DentistName, AmountCharged, AmountPaid, Balance
         FROM TreatmentRecords WHERE PatientID = ? ORDER BY DateOfTreatment DESC
-    ''', (patient_id,))
+        LIMIT ? OFFSET ?
+    ''', (patient_id, per_page, offset))
     records = cursor.fetchall()
     conn.close()
     return render_template(
@@ -1027,8 +1042,78 @@ def treatment_records(patient_name):
         patient=patient,
         records=records,
         error_message=error_message,
-        today=date.today().isoformat()
+        today=date.today().isoformat(),
+        page=page,
+        per_page=per_page,
+        total_records=total_records,
+        total_pages=total_pages
     )
+
+@app.route('/patient/<patient_name>/intraoral-exam')
+def intraoral_exam(patient_name):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    # Get patient info
+    cursor.execute("SELECT ID, Name FROM Patients WHERE Name = ?", (patient_name,))
+    patient = cursor.fetchone()
+    if not patient:
+        conn.close()
+        return redirect('/patients')
+    patient_id = patient[0]
+    # Get dental chart records for this patient
+    cursor.execute('''
+        SELECT ToothNumber, Condition, Treatment, Notes, ExamDate
+        FROM DentalCharts WHERE PatientID = ? ORDER BY ToothNumber ASC
+    ''', (patient_id,))
+    chart_records = cursor.fetchall()
+    # Prepare a list of string tooth numbers for template
+    tooth_numbers_with_records = [str(row[0]) for row in chart_records]
+    conn.close()
+    return render_template(
+        'intraoral_exam.html',
+        patient=patient,
+        chart_records=chart_records,
+        tooth_numbers_with_records=tooth_numbers_with_records
+    )
+
+@app.route('/api/patient/<int:patient_id>/dental-chart', methods=['GET', 'POST'])
+def api_dental_chart(patient_id):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    if request.method == 'GET':
+        cursor.execute("SELECT ToothNumber, SliceColors, Notes FROM DentalCharts WHERE PatientID = ?", (patient_id,))
+        chart = {}
+        for row in cursor.fetchall():
+            tooth = row[0]
+            try:
+                slice_colors = json.loads(row[1]) if row[1] else {}
+            except Exception:
+                slice_colors = {}
+            notes = row[2] or {}
+            if isinstance(notes, str):
+                try:
+                    notes = json.loads(notes)
+                except Exception:
+                    notes = {}
+            chart[tooth] = {'slice_colors': slice_colors, 'notes': notes}
+        conn.close()
+        return jsonify(chart)
+    else:  # POST
+        data = request.get_json()
+        chart_data = data.get('chart', {})
+        for tooth, info in chart_data.items():
+            slice_colors = json.dumps(info.get('slice_colors', {}))
+            notes = json.dumps(info.get('notes', {}))
+            # Upsert logic: update if exists, else insert
+            cursor.execute("SELECT ID FROM DentalCharts WHERE PatientID = ? AND ToothNumber = ?", (patient_id, tooth))
+            row = cursor.fetchone()
+            if row:
+                cursor.execute("UPDATE DentalCharts SET SliceColors = ?, Notes = ? WHERE ID = ?", (slice_colors, notes, row[0]))
+            else:
+                cursor.execute("INSERT INTO DentalCharts (PatientID, ToothNumber, SliceColors, Notes) VALUES (?, ?, ?, ?)", (patient_id, tooth, slice_colors, notes))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
 
 if __name__ == '__main__':
     app.run(debug=True)

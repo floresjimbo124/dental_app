@@ -13,9 +13,12 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             overflow: hidden;
         }
-        .records-container .table-responsive {
+        /* Improved scroll: both vertical and horizontal */
+        .records-container .table-scroll-area {
             max-height: 600px;
             overflow-y: auto;
+            overflow-x: auto;
+            width: 100%;
         }
         .table th {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -163,26 +166,40 @@
                     <h6 class="text-info mb-0"><i class="fas fa-calendar-plus me-2"></i>Next Appointment</h6>
                     <hr class="mt-1 mb-3">
                 </div>
-                <div class="col-md-3">
+                <div class="row g-2 mb-2">
+                    <div class="col-md-4">
                     <label for="next_appointment_date" class="form-label">Next Appt. Date</label>
                     <input type="date" class="form-control" id="next_appointment_date" name="next_appointment_date" min="{{ today }}">
+                    </div>
                 </div>
-                <div class="col-md-3">
+                <div class="row g-2 align-items-end mb-2">
+                    <div class="col-md-4">
                     <label for="next_appointment_time" class="form-label">Next Appt. Time</label>
                     <select class="form-select" id="next_appointment_time" name="next_appointment_time">
                         <option value="">Select a time</option>
                     </select>
+                        <small id="next-appt-availability-message" style="display:block;min-height:1.5em;margin-top:2px;"></small>
                 </div>
-                <div class="col-12">
-                    <div id="next-appt-availability-message"></div>
+                    <div class="col-md-8 text-end">
+                        <button type="submit" class="btn btn-success btn-custom mt-4" style="border-radius:0px;"><i class="fas fa-plus me-2"></i>Add Record</button>
                 </div>
-                <div class="col-md-3 d-grid align-self-end">
-                    <button type="submit" class="btn btn-success btn-custom"><i class="fas fa-plus me-2"></i>Add Record</button>
                 </div>
             </form>
         </div>
         <div class="records-container">
-            <div class="table-responsive">
+            <!-- Records per Page Selector (moved here) -->
+            <div class="d-flex justify-content-end align-items-center px-3 pt-3">
+                <form method="get" class="d-flex align-items-center">
+                    <label for="per_page" class="form-label me-2 mb-0">Records per Page</label>
+                    <select class="form-select form-select-sm w-auto" id="per_page" name="per_page" onchange="this.form.submit()">
+                        <option value="5" {% if per_page == 5 %}selected{% endif %}>5</option>
+                        <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                        <option value="15" {% if per_page == 15 %}selected{% endif %}>15</option>
+                    </select>
+                    <input type="hidden" name="page" value="1">
+                </form>
+            </div>
+            <div class="table-scroll-area">
                 <table class="table table-hover table-bordered align-middle mb-0">
                     <thead>
                         <tr>
@@ -221,6 +238,81 @@
             </div>
         </div>
     </div>
+    <!-- Pagination Section -->
+    {% if total_pages > 1 %}
+    <section class="py-3">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    
+                </div>
+                <div class="col-md-6">
+                    <nav aria-label="Treatment records pagination">
+                        <ul class="pagination justify-content-end mb-0">
+                            <!-- Previous Page -->
+                            {% if page > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('treatment_records', patient_name=patient[1], page=page-1, per_page=per_page) }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    <i class="fas fa-chevron-left"></i>
+                                </span>
+                            </li>
+                            {% endif %}
+
+                            <!-- Page Numbers -->
+                            {% set start_page = [1, page - 2]|max %}
+                            {% set end_page = [total_pages, page + 2]|min %}
+                            {% if start_page > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('treatment_records', patient_name=patient[1], page=1, per_page=per_page) }}">1</a>
+                            </li>
+                            {% if start_page > 2 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                            {% endif %}
+                            {% for p in range(start_page, end_page + 1) %}
+                            <li class="page-item {% if p == page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('treatment_records', patient_name=patient[1], page=p, per_page=per_page) }}">{{ p }}</a>
+                            </li>
+                            {% endfor %}
+                            {% if end_page < total_pages %}
+                            {% if end_page < total_pages - 1 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('treatment_records', patient_name=patient[1], page=total_pages, per_page=per_page) }}">{{ total_pages }}</a>
+                            </li>
+                            {% endif %}
+                            <!-- Next Page -->
+                            {% if page < total_pages %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('treatment_records', patient_name=patient[1], page=page+1, per_page=per_page) }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    <i class="fas fa-chevron-right"></i>
+                                </span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Auto-calculate balance
@@ -246,7 +338,7 @@
                     const selectedDate = this.value;
                     if (!selectedDate) {
                         nextApptTime.innerHTML = '<option value="">Select a time</option>';
-                        nextApptMsg.innerHTML = '';
+                        nextApptMsg.textContent = '';
                         return;
                     }
                     fetch(`/api/available-times?date=${selectedDate}`)
@@ -265,15 +357,145 @@
                                     option.textContent = `${hour12}:${minutes} ${ampm}`;
                                     nextApptTime.appendChild(option);
                                 });
-                                nextApptMsg.innerHTML = `<div class='alert alert-success alert-responsive mt-2'>${data.available_times.length} available times for ${selectedDate}</div>`;
+                                nextApptMsg.textContent = `${data.available_times.length} available times for ${selectedDate}`;
+                                nextApptMsg.className = 'text-success';
                             } else {
                                 nextApptTime.innerHTML = '<option value="">No available times</option>';
-                                nextApptMsg.innerHTML = `<div class='alert alert-warning alert-responsive mt-2'>No available times for ${selectedDate}</div>`;
+                                nextApptMsg.textContent = `No available times for ${selectedDate}`;
+                                nextApptMsg.className = 'text-warning';
                             }
                         })
                         .catch(error => {
-                            nextApptMsg.innerHTML = `<div class='alert alert-danger alert-responsive mt-2'>Error loading available times</div>`;
+                            nextApptMsg.textContent = 'Error loading available times';
+                            nextApptMsg.className = 'text-danger';
                         });
+                });
+            }
+        });
+
+        // --- Persistent scroll position for table-scroll-area ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const tableScroll = document.querySelector('.table-scroll-area');
+            // Restore scroll position if available
+            const savedScroll = sessionStorage.getItem('tableScrollTop');
+            if (tableScroll && savedScroll !== null) {
+                tableScroll.scrollTop = parseInt(savedScroll);
+                sessionStorage.removeItem('tableScrollTop');
+            }
+            // Save scroll position on pagination link click
+            document.querySelectorAll('.pagination .page-link').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    if (tableScroll) {
+                        sessionStorage.setItem('tableScrollTop', tableScroll.scrollTop);
+                    }
+                });
+            });
+            // Save scroll position on per-page selector change
+            const perPageSelect = document.getElementById('per_page');
+            if (perPageSelect) {
+                perPageSelect.addEventListener('change', function() {
+                    if (tableScroll) {
+                        sessionStorage.setItem('tableScrollTop', tableScroll.scrollTop);
+                    }
+                });
+            }
+        });
+
+        // --- AJAX pagination and scroll fix (like appointments page) ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // Intercept pagination link clicks
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.pagination .page-link')) {
+                    e.preventDefault();
+                    const link = e.target.closest('.page-link');
+                    const href = link.getAttribute('href');
+                    if (href && !link.classList.contains('disabled')) {
+                        const scrollPosition = window.scrollY;
+                        fetch(href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                            .then(response => response.text())
+                            .then(html => {
+                                const tempDiv = document.createElement('div');
+                                tempDiv.innerHTML = html;
+                                // Update the records table
+                                const newTable = tempDiv.querySelector('.records-container');
+                                const currentTable = document.querySelector('.records-container');
+                                if (newTable && currentTable) {
+                                    currentTable.innerHTML = newTable.innerHTML;
+                                }
+                                // Update pagination section
+                                const newPagination = tempDiv.querySelector('section.py-3');
+                                const currentPagination = document.querySelector('section.py-3');
+                                if (newPagination && currentPagination) {
+                                    currentPagination.innerHTML = newPagination.innerHTML;
+                                } else if (newPagination && !currentPagination) {
+                                    // If pagination section is missing, add it
+                                    const container = document.querySelector('.container.py-4');
+                                    if (container) {
+                                        container.appendChild(newPagination);
+                                    }
+                                } else if (!newPagination && currentPagination) {
+                                    currentPagination.remove();
+                                }
+                                // Update URL without reload
+                                history.pushState({}, '', href);
+                                // Restore scroll position
+                                setTimeout(() => {
+                                    window.scrollTo(0, scrollPosition);
+                                }, 50);
+                            })
+                            .catch(() => {
+                                window.location.href = href;
+                            });
+                    }
+                }
+            });
+            // Intercept per-page selector change
+            const perPageSelect = document.getElementById('per_page');
+            if (perPageSelect) {
+                perPageSelect.addEventListener('change', function(e) {
+                    e.preventDefault();
+                    const form = perPageSelect.closest('form');
+                    if (form) {
+                        const formData = new FormData(form);
+                        const params = new URLSearchParams(formData).toString();
+                        const action = form.getAttribute('action') || window.location.pathname;
+                        const url = action + '?' + params;
+                        const scrollPosition = window.scrollY;
+                        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                            .then(response => response.text())
+                            .then(html => {
+                                const tempDiv = document.createElement('div');
+                                tempDiv.innerHTML = html;
+                                // Update the records table
+                                const newTable = tempDiv.querySelector('.records-container');
+                                const currentTable = document.querySelector('.records-container');
+                                if (newTable && currentTable) {
+                                    currentTable.innerHTML = newTable.innerHTML;
+                                }
+                                // Update pagination section
+                                const newPagination = tempDiv.querySelector('section.py-3');
+                                const currentPagination = document.querySelector('section.py-3');
+                                if (newPagination && currentPagination) {
+                                    currentPagination.innerHTML = newPagination.innerHTML;
+                                } else if (newPagination && !currentPagination) {
+                                    const container = document.querySelector('.container.py-4');
+                                    if (container) {
+                                        container.appendChild(newPagination);
+                                    }
+                                } else if (!newPagination && currentPagination) {
+                                    currentPagination.remove();
+                                }
+                                // Update URL without reload
+                                history.pushState({}, '', url);
+                                // Restore scroll position
+                                setTimeout(() => {
+                                    window.scrollTo(0, scrollPosition);
+                                }, 50);
+                            })
+                            .catch(() => {
+                                window.location.href = url;
+                            });
+                    }
                 });
             }
         });
